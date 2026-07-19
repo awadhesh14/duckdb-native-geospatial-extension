@@ -1,0 +1,23 @@
+# name: test/sql/geoparquet_scanner.test
+# description: test geoparquet_scanner extension
+# group: [sql]
+
+# Before we load the extension, this will fail
+statement error
+SELECT geoparquet_scanner('Sam');
+----
+Catalog Error: Scalar Function with name geoparquet_scanner does not exist!
+
+# Require statement will ensure this test is run with this extension loaded
+require geoparquet_scanner
+
+# Confirm the extension works
+query I
+SELECT geoparquet_scanner('Sam');
+----
+...........🦆 Sam
+
+query I
+SELECT geoparquet_scanner_openssl_version('Michael') ILIKE 'GeoparquetScanner Michael, my linked OpenSSL version is OpenSSL%';
+----
+true
