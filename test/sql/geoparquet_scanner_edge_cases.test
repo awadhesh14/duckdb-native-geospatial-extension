@@ -33,3 +33,15 @@ query I
 SELECT count(*) FROM read_geoparquet('data/edge_cases/empty_file.parquet')
 ----
 0
+
+# Custom flat bbox columns
+query I
+SELECT count(*) FROM read_geoparquet('data/edge_cases/custom_bbox.parquet') WHERE min_x > 50
+----
+1
+
+# Prune entire custom bbox file
+query I
+SELECT count(*) FROM read_geoparquet('data/edge_cases/custom_bbox.parquet') WHERE min_x > 200
+----
+0

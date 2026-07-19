@@ -71,3 +71,39 @@ table_empty = table_empty.replace_schema_metadata(meta)
 pq.write_table(table_empty, os.path.join(OUT_DIR, "empty_file.parquet"))
 
 print("Successfully generated edge case data.")
+
+# 5. custom_bbox.parquet
+# Valid "geo" metadata with a flat schema covering bbox.
+table_custom = pa.table({
+    "id": [1, 2, 3],
+    "geometry": [b"wkb1", b"wkb2", b"wkb3"],
+    "min_x": [0.0, -10.0, 100.0],
+    "min_y": [0.0, -10.0, 100.0],
+    "max_x": [10.0, 0.0, 110.0],
+    "max_y": [10.0, 0.0, 110.0]
+})
+
+custom_geo_meta = {
+    "version": "1.1.0",
+    "primary_column": "geometry",
+    "columns": {
+        "geometry": {
+            "encoding": "WKB",
+            "geometry_types": ["Polygon"],
+            "bbox": [-10.0, -10.0, 110.0, 110.0],
+            "covering": {
+                "bbox": {
+                    "xmin": ["min_x"],
+                    "ymin": ["min_y"],
+                    "xmax": ["max_x"],
+                    "ymax": ["max_y"]
+                }
+            }
+        }
+    }
+}
+meta_custom = {b"geo": json.dumps(custom_geo_meta).encode("utf-8")}
+table_custom = table_custom.replace_schema_metadata(meta_custom)
+pq.write_table(table_custom, os.path.join(OUT_DIR, "custom_bbox.parquet"))
+
+print("Successfully generated custom_bbox.parquet.")

@@ -252,8 +252,13 @@ static unique_ptr<GlobalTableFunctionState> ReadGeoParquetInitGlobal(ClientConte
 						return true;
 					} else {
 						int global_idx = -1;
-						if (current_col_name == "xmin" || current_col_name == "xmax") global_idx = 0;
-						else if (current_col_name == "ymin" || current_col_name == "ymax") global_idx = 1;
+						if ((!bind_data.bbox_paths[0].empty() && current_col_name == bind_data.bbox_paths[0].back()) ||
+						    (!bind_data.bbox_paths[2].empty() && current_col_name == bind_data.bbox_paths[2].back())) {
+							global_idx = 0;
+						} else if ((!bind_data.bbox_paths[1].empty() && current_col_name == bind_data.bbox_paths[1].back()) ||
+						           (!bind_data.bbox_paths[3].empty() && current_col_name == bind_data.bbox_paths[3].back())) {
+							global_idx = 1;
+						}
 
 						if (global_idx != -1) {
 							auto stats = duckdb::NumericStats::CreateEmpty(duckdb::LogicalType::DOUBLE);
@@ -284,7 +289,15 @@ static unique_ptr<GlobalTableFunctionState> ReadGeoParquetInitGlobal(ClientConte
 				std::cout << "DEBUG: Checking filter_col_name: '" << filter_col_name << "'" << std::endl;
 				std::cout << "DEBUG: Geometry column name: '" << bind_data.geometry_column_name << "'" << std::endl;
 
-				if (filter_col_name == "bbox" || filter_col_name == bind_data.geometry_column_name) {
+				bool is_bbox_col = false;
+				for (int j = 0; j < 4; j++) {
+					if (!bind_data.bbox_paths[j].empty() && filter_col_name == bind_data.bbox_paths[j].front()) {
+						is_bbox_col = true;
+						break;
+					}
+				}
+
+				if (is_bbox_col || filter_col_name == bind_data.geometry_column_name) {
 					if (check_global_filter(filter.get(), filter_col_name)) {
 						prune_entire_file = true;
 						break;
@@ -331,7 +344,7 @@ static unique_ptr<GlobalTableFunctionState> ReadGeoParquetInitGlobal(ClientConte
 						const duckdb::ParquetColumnSchema *target_node = nullptr;
 						for (int j = 0; j < 4; j++) {
 							if (bbox_nodes[j] && !bind_data.bbox_paths[j].empty()) {
-								if (current_col_name == bind_data.bbox_paths[j].back() || current_col_name == bind_data.bbox_paths[j].front()) {
+								if (current_col_name == bind_data.bbox_paths[j].back()) {
 									target_node = bbox_nodes[j];
 									break;
 								}
@@ -353,7 +366,15 @@ static unique_ptr<GlobalTableFunctionState> ReadGeoParquetInitGlobal(ClientConte
 				std::cout << "DEBUG: Checking filter_col_name: '" << filter_col_name << "'" << std::endl;
 				std::cout << "DEBUG: Geometry column name: '" << bind_data.geometry_column_name << "'" << std::endl;
 
-				if (filter_col_name == "bbox" || filter_col_name == bind_data.geometry_column_name) {
+				bool is_bbox_col = false;
+				for (int j = 0; j < 4; j++) {
+					if (!bind_data.bbox_paths[j].empty() && filter_col_name == bind_data.bbox_paths[j].front()) {
+						is_bbox_col = true;
+						break;
+					}
+				}
+
+				if (is_bbox_col || filter_col_name == bind_data.geometry_column_name) {
 					if (check_filter(filter.get(), filter_col_name)) {
 						prune = true;
 						break;
