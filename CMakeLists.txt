@@ -15,8 +15,10 @@ project(${TARGET_NAME})
 
 set(CMAKE_CXX_STANDARD "17" CACHE STRING "C++ standard to enforce")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 include_directories(src/include)
+include_directories(duckdb/extension/parquet/include)
+include_directories(duckdb/third_party/parquet)
+include_directories(duckdb/third_party/thrift)
 
 set(EXTENSION_SOURCES src/geoparquet_scanner_extension.cpp)
 
@@ -24,8 +26,8 @@ build_static_extension(${TARGET_NAME} ${EXTENSION_SOURCES})
 build_loadable_extension(${TARGET_NAME} " " ${EXTENSION_SOURCES})
 
 # Link OpenSSL in both the static library as the loadable extension
-target_link_libraries(${EXTENSION_NAME} OpenSSL::SSL OpenSSL::Crypto)
-target_link_libraries(${LOADABLE_EXTENSION_NAME} OpenSSL::SSL OpenSSL::Crypto)
+target_link_libraries(${EXTENSION_NAME} OpenSSL::SSL OpenSSL::Crypto parquet_extension)
+target_link_libraries(${LOADABLE_EXTENSION_NAME} OpenSSL::SSL OpenSSL::Crypto parquet_extension)
 
 install(
   TARGETS ${EXTENSION_NAME}
