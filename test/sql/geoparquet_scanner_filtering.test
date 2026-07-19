@@ -1,0 +1,46 @@
+# name: test/sql/geoparquet_scanner_filtering.test
+# description: verify filter pushdown correctness
+# group: [sql]
+
+require geoparquet_scanner
+
+require parquet
+
+# In-bounds query: > -100
+query I
+SELECT count(*) FROM read_geoparquet('data/test_buildings.parquet') WHERE bbox.xmin > -100
+----
+4681293
+
+query I
+SELECT count(*) FROM read_parquet('data/test_buildings.parquet') WHERE bbox.xmin > -100
+----
+4681293
+
+# Out-of-bounds query: > 180 (prunes everything)
+query I
+SELECT count(*) FROM read_geoparquet('data/test_buildings.parquet') WHERE bbox.xmin > 180
+----
+0
+
+# Complex filtering with AND
+query I
+SELECT count(*) FROM read_geoparquet('data/test_buildings.parquet') WHERE bbox.xmin > -100 AND bbox.ymin > 20
+----
+0
+
+query I
+SELECT count(*) FROM read_parquet('data/test_buildings.parquet') WHERE bbox.xmin > -100 AND bbox.ymin > 20
+----
+0
+
+# Filtering on a non-bbox field alongside bbox (if available)
+query I
+SELECT count(*) FROM read_geoparquet('data/test_buildings.parquet') WHERE bbox.xmin > -100 AND roof_material = 'metal'
+----
+36
+
+query I
+SELECT count(*) FROM read_parquet('data/test_buildings.parquet') WHERE bbox.xmin > -100 AND roof_material = 'metal'
+----
+36

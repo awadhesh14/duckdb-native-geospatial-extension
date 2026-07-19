@@ -1,0 +1,44 @@
+# name: test/sql/geoparquet_scanner_correctness.test
+# description: verify correctness against standard read_parquet
+# group: [sql]
+
+require geoparquet_scanner
+
+require parquet
+
+# Compare standard parquet with geoparquet_scanner on a real dataset
+query I
+SELECT count(*) FROM read_parquet('data/test_buildings.parquet')
+----
+5000000
+
+query I
+SELECT count(*) FROM read_geoparquet('data/test_buildings.parquet')
+----
+5000000
+
+# Compare a simple projection
+query I
+SELECT count(*) FROM (
+    SELECT bbox.xmin, geometry FROM read_parquet('data/test_buildings.parquet') LIMIT 10
+)
+----
+10
+
+query I
+SELECT count(*) FROM (
+    SELECT bbox.xmin, geometry FROM read_geoparquet('data/test_buildings.parquet') LIMIT 10
+)
+----
+10
+
+# Compare results for a deterministic slice
+query I
+SELECT sum(x) FROM (SELECT bbox.xmin AS x FROM read_parquet('data/test_buildings.parquet') ORDER BY bbox.xmin LIMIT 10)
+----
+-1800.0
+
+query I
+SELECT sum(x) FROM (SELECT bbox.xmin AS x FROM read_geoparquet('data/test_buildings.parquet') ORDER BY bbox.xmin LIMIT 10)
+----
+-1800.0

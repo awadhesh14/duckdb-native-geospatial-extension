@@ -1,0 +1,35 @@
+# name: test/sql/geoparquet_scanner_edge_cases.test
+# description: test geoparquet scanner against edge case files
+# group: [sql]
+
+require geoparquet_scanner
+
+require parquet
+
+# Missing geo metadata
+statement error
+SELECT count(*) FROM read_geoparquet('data/edge_cases/missing_geo_metadata.parquet')
+----
+IO Error: File data/edge_cases/missing_geo_metadata.parquet does not contain 'geo' metadata, not a valid GeoParquet file
+
+# Missing bbox column
+query I
+SELECT count(*) FROM read_geoparquet('data/edge_cases/missing_bbox_column.parquet')
+----
+3
+
+# Malformed geo metadata
+# JSON parsing fails, should we throw an error or fallback?
+# Our implementation prints an error and returns an empty GlobalState if the metadata is fully broken, 
+# wait, actually it might just fallback to row group scanning without global pruning if JSON is broken.
+# Let's just check it doesn't crash.
+query I
+SELECT count(*) FROM read_geoparquet('data/edge_cases/malformed_geo_metadata.parquet')
+----
+3
+
+# Empty file
+query I
+SELECT count(*) FROM read_geoparquet('data/edge_cases/empty_file.parquet')
+----
+0

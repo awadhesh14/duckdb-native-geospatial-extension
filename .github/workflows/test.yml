@@ -1,0 +1,65 @@
+name: Extension Tests
+on: [push, pull_request]
+
+jobs:
+  test-asan:
+    name: Run tests with ASan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build cmake python3-pip
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install pyarrow & pytest
+        run: pip install pyarrow pytest duckdb
+
+      - name: Generate Test Data
+        run: python3 scripts/generate_test_data.py
+
+      - name: Build with ASan
+        run: GEN=ninja ASAN=1 make
+
+      - name: Run sqllogictest
+        run: make test
+
+      - name: Run pytest regression
+        run: pytest test/pytest/test_regression.py
+
+  test-ubsan:
+    name: Run tests with UBSan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: 'true'
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build cmake python3-pip
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install pyarrow & pytest
+        run: pip install pyarrow pytest duckdb
+
+      - name: Generate Test Data
+        run: python3 scripts/generate_test_data.py
+
+      - name: Build with UBSan
+        run: GEN=ninja UBSAN=1 make
+
+      - name: Run sqllogictest
+        run: make test
+
+      - name: Run pytest regression
+        run: pytest test/pytest/test_regression.py
